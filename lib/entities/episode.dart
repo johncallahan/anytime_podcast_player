@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:anytime/core/annotations.dart';
+import 'package:anytime/core/utils.dart';
 import 'package:anytime/entities/chapter.dart';
 import 'package:anytime/entities/downloadable.dart';
 import 'package:flutter/foundation.dart';
@@ -127,10 +128,10 @@ class Episode {
     this.title,
     this.description,
     this.link,
-    this.imageUrl,
-    this.thumbImageUrl,
+    String imageUrl,
+    String thumbImageUrl,
     this.publicationDate,
-    this.contentUrl,
+    String contentUrl,
     this.author,
     this.season = 0,
     this.episode = 0,
@@ -139,10 +140,13 @@ class Episode {
     this.downloadPercentage = 0,
     this.played = false,
     this.highlight = false,
-    this.chaptersUrl,
+    String chaptersUrl,
     this.chapters = const <Chapter>[],
     this.lastUpdated,
-  });
+  })  : imageUrl = imageUrl?.forceHttps,
+          thumbImageUrl = thumbImageUrl?.forceHttps,
+          contentUrl = contentUrl?.forceHttps,
+          chaptersUrl = chaptersUrl?.forceHttps;
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{

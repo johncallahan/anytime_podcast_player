@@ -69,7 +69,7 @@ class Podcast {
     this.episodes,
     this.newEpisodes = false,
     DateTime lastUpdated,
-  })  : url = url.forceHttps,
+  })  : url = url,
     imageUrl = imageUrl?.forceHttps,
     thumbImageUrl = thumbImageUrl?.forceHttps {
     _lastUpdated = lastUpdated;

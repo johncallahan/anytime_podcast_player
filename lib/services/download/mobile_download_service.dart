@@ -41,26 +41,28 @@ class MobileDownloadService extends DownloadService {
   Future<bool> downloadEpisode(Episode episode) async {
     final season = episode.season > 0 ? episode.season.toString() : '';
     final epno = episode.episode > 0 ? episode.episode.toString() : '';
-
+	
     if (await hasStoragePermission()) {
       final savedEpisode = await repository.findEpisodeByGuid(episode.guid);
-
+	  
       if (savedEpisode != null) {
         episode = savedEpisode;
       }
-
+	  
       final episodePath = await resolveDirectory(episode: episode);
       final downloadPath = await resolveDirectory(episode: episode, full: true);
       var uri = Uri.parse(episode.contentUrl!);
-
+	  
       // Ensure the download directory exists
       await createDownloadDirectory(episode);
-
+	  
       // Filename should be last segment of URI.
-      var filename = safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.mp3')));
-
-      filename ??= safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.m4a')));
-
+      //var filename = safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.mp3')));
+      //filename ??= safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.m4a')));
+	  
+	  // Instead, just use the last segment as the filename regardless
+	  var filename = uri.pathSegments.last;
+	  
       if (filename == null) {
         //TODO: Handle unsupported format.
       } else {

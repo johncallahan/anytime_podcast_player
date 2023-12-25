@@ -13,7 +13,7 @@ import 'package:anytime/ui/widgets/action_text.dart';
 import 'package:anytime/ui/widgets/tile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dialogs/flutter_dialogs.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:provider/provider.dart';
 
 /// An EpisodeTitle is built with an [ExpandedTile] widget and displays the episode's
@@ -61,6 +61,7 @@ class _EpisodeTileState extends State<EpisodeTile> {
           ? L.of(context)!.semantics_episode_tile_expanded_hint
           : L.of(context)!.semantics_episode_tile_collapsed_hint,
       child: ExpansionTile(
+        tilePadding: const EdgeInsets.fromLTRB(16.0, 0.0, 8.0, 0.0),
         key: Key('PT${widget.episode.guid}'),
         onExpansionChanged: (isExpanded) {
           setState(() {
@@ -75,26 +76,28 @@ class _EpisodeTileState extends State<EpisodeTile> {
             play: widget.play,
           ),
         ),
-        leading: Stack(
-          alignment: Alignment.bottomLeft,
-          fit: StackFit.passthrough,
-          children: <Widget>[
-            Opacity(
-              opacity: widget.episode.played ? 0.5 : 1.0,
-              child: TileImage(
-                url: widget.episode.thumbImageUrl ?? widget.episode.imageUrl!,
-                size: 56.0,
-                highlight: widget.episode.highlight,
+        leading: ExcludeSemantics(
+          child: Stack(
+            alignment: Alignment.bottomLeft,
+            fit: StackFit.passthrough,
+            children: <Widget>[
+              Opacity(
+                opacity: widget.episode.played ? 0.5 : 1.0,
+                child: TileImage(
+                  url: widget.episode.thumbImageUrl ?? widget.episode.imageUrl!,
+                  size: 56.0,
+                  highlight: widget.episode.highlight,
+                ),
               ),
-            ),
-            SizedBox(
-              height: 5.0,
-              width: 56.0 * (widget.episode.percentagePlayed / 100),
-              child: Container(
-                color: Theme.of(context).primaryColor,
+              SizedBox(
+                height: 5.0,
+                width: 56.0 * (widget.episode.percentagePlayed / 100),
+                child: Container(
+                  color: Theme.of(context).primaryColor,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         subtitle: Opacity(
           opacity: widget.episode.played ? 0.5 : 1.0,
@@ -342,8 +345,8 @@ class EpisodeTransportControls extends StatelessWidget {
     final buttons = <Widget>[];
 
     if (download) {
-      buttons.add(Padding(
-        padding: const EdgeInsets.only(left: 0.0),
+      buttons.add(Semantics(
+        container: true,
         child: DownloadControl(
           episode: episode,
         ),
@@ -351,8 +354,8 @@ class EpisodeTransportControls extends StatelessWidget {
     }
 
     if (play) {
-      buttons.add(Padding(
-        padding: const EdgeInsets.only(left: 8.0),
+      buttons.add(Semantics(
+        container: true,
         child: PlayControl(
           episode: episode,
         ),
@@ -360,7 +363,7 @@ class EpisodeTransportControls extends StatelessWidget {
     }
 
     return SizedBox(
-      width: (buttons.length * 38.0) + 8.0,
+      width: (buttons.length * 48.0),
       child: Row(
         children: <Widget>[...buttons],
       ),

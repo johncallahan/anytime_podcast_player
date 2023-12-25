@@ -9,6 +9,7 @@ import 'package:anytime/bloc/search/search_state_event.dart';
 import 'package:anytime/l10n/L.dart';
 import 'package:anytime/ui/search/search_results.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -71,6 +72,7 @@ class _SearchState extends State<Search> {
             ),
             title: Semantics(
               label: L.of(context)!.search_for_podcasts_hint,
+              textField: true,
               child: TextField(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
@@ -86,6 +88,7 @@ class _SearchState extends State<Search> {
                       fontSize: 18.0,
                       decorationColor: Theme.of(context).scaffoldBackgroundColor),
                   onSubmitted: ((value) {
+                    SemanticsService.announce(L.of(context)!.semantic_announce_searching, TextDirection.ltr);
                     bloc.search(SearchTermEvent(value));
                   })),
             ),

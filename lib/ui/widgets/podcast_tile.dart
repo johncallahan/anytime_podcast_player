@@ -37,12 +37,14 @@ class PodcastTile extends StatelessWidget {
 		Clipboard.setData(ClipboardData(text: podcast.url));
 	  },
       minVerticalPadding: 9,
-      leading: Hero(
-        key: Key('tilehero${podcast.imageUrl}:${podcast.link}'),
-        tag: '${podcast.imageUrl}:${podcast.link}',
-        child: TileImage(
-          url: podcast.imageUrl!,
-          size: 60,
+      leading: ExcludeSemantics(
+        child: Hero(
+          key: Key('tilehero${podcast.imageUrl}:${podcast.link}'),
+          tag: '${podcast.imageUrl}:${podcast.link}',
+          child: TileImage(
+            url: podcast.imageUrl!,
+            size: 60,
+          ),
         ),
       ),
       title: Text(

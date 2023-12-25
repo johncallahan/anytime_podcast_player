@@ -37,7 +37,7 @@ class DefaultAudioPlayerService extends AudioPlayerService {
   final log = Logger('DefaultAudioPlayerService');
   final Repository repository;
   final SettingsService settingsService;
-  final PodcastService? podcastService;
+  final PodcastService podcastService;
 
   late AudioHandler _audioHandler;
   var _initialised = false;
@@ -286,9 +286,9 @@ class DefaultAudioPlayerService extends AudioPlayerService {
   }
 
   @override
-  Future<void> stop() {
+  Future<void> stop() async {
     _currentEpisode = null;
-    return _audioHandler.stop();
+    await _audioHandler.stop();
   }
 
   @override
@@ -333,10 +333,12 @@ class DefaultAudioPlayerService extends AudioPlayerService {
     /// If _episode is null, we must have stopped whilst still active or we were killed.
     if (_currentEpisode == null) {
       if (_initialised && _audioHandler.mediaItem.value != null) {
-        final extras = _audioHandler.mediaItem.value?.extras;
+        if (_audioHandler.playbackState.value.processingState != AudioProcessingState.idle) {
+          final extras = _audioHandler.mediaItem.value?.extras;
 
-        if (extras != null && extras['eid'] != null) {
-          _currentEpisode = await repository.findEpisodeByGuid(extras['eid'] as String);
+          if (extras != null && extras['eid'] != null) {
+            _currentEpisode = await repository.findEpisodeByGuid(extras['eid'] as String);
+          }
         }
       } else {
         // Let's see if we have a persisted state
@@ -514,7 +516,7 @@ class DefaultAudioPlayerService extends AudioPlayerService {
   }
 
   Future<void> _loadQueue() async {
-    _queue = await podcastService!.loadQueue();
+    _queue = await podcastService.loadQueue();
   }
 
   Future<void> _completed() async {
@@ -569,7 +571,7 @@ class DefaultAudioPlayerService extends AudioPlayerService {
       log.fine('Loading chapters from ${_currentEpisode!.chaptersUrl}');
 
       if (_currentEpisode!.chaptersUrl != null) {
-        _currentEpisode!.chapters = await podcastService!.loadChaptersByUrl(url: _currentEpisode!.chaptersUrl!);
+        _currentEpisode!.chapters = await podcastService.loadChaptersByUrl(url: _currentEpisode!.chaptersUrl!);
         _currentEpisode!.chaptersLoading = false;
       }
 
@@ -592,7 +594,7 @@ class DefaultAudioPlayerService extends AudioPlayerService {
 
           log.fine('Loading transcript from ${sub.url}');
 
-          transcript = await podcastService!.loadTranscriptByUrl(transcriptUrl: sub);
+          transcript = await podcastService.loadTranscriptByUrl(transcriptUrl: sub);
 
           log.fine('We have ${transcript.subtitles.length} transcript lines');
         }
@@ -727,12 +729,11 @@ class DefaultAudioPlayerService extends AudioPlayerService {
     if (_currentEpisode == null) {
       log.fine('Warning. Attempting to update chapter information on a null _episode');
     } else if (_currentEpisode!.hasChapters && _currentEpisode!.chaptersAreLoaded) {
-      final chapters = _currentEpisode!.chapters;
+      final chapters = _currentEpisode!.chapters.where((element) => element.toc).toList(growable: false);
 
-      for (var chapterPtr = 0; chapterPtr < _currentEpisode!.chapters.length; chapterPtr++) {
+      for (var chapterPtr = 0; chapterPtr < chapters.length; chapterPtr++) {
         final startTime = chapters[chapterPtr].startTime;
-        final endTime =
-            chapterPtr == (_currentEpisode!.chapters.length - 1) ? duration : chapters[chapterPtr + 1].startTime;
+        final endTime = chapterPtr == (chapters.length - 1) ? duration : chapters[chapterPtr + 1].startTime;
 
         if (seconds >= startTime && seconds < endTime) {
           if (chapters[chapterPtr] != _currentEpisode!.currentChapter) {
@@ -821,25 +822,29 @@ class _DefaultAudioPlayerHandler extends BaseAudioHandler with SeekHandler {
       );
     } else {
       _player = AudioPlayer(
-
-          /// Temporarily disable custom user agent to get over proxy issue in just_audio on iOS.
-          /// https://github.com/ryanheise/audio_service/issues/915
-          //   userAgent: Environment.userAgent(),
-          audioLoadConfiguration: AudioLoadConfiguration(
-        androidLoadControl: AndroidLoadControl(
-          backBufferDuration: const Duration(seconds: 45),
-        ),
-        darwinLoadControl: DarwinLoadControl(),
-      ));
+          userAgent: Environment.userAgent(),
+          useProxyForRequestHeaders: false,
+          audioLoadConfiguration: const AudioLoadConfiguration(
+            androidLoadControl: AndroidLoadControl(
+              backBufferDuration: Duration(seconds: 45),
+            ),
+            darwinLoadControl: DarwinLoadControl(),
+          ));
     }
 
     /// List to events from the player itself, transform the player event to an audio service one
     /// and hand it off to the playback state stream to inform our client(s).
-    _player.playbackEventStream.map(_transformEvent).pipe(playbackState).catchError((Object o, StackTrace s) async {
+    _player.playbackEventStream.map((event) => _transformEvent(event)).listen((data) {
+      if (playbackState.isClosed) {
+        log.warning('WARN: Playback state is already closed.');
+      } else {
+        playbackState.add(data);
+      }
+    }).onError((error) {
       log.fine('Playback error received');
-      log.fine(o.toString());
+      log.fine(error.toString());
 
-      await _player.stop();
+      _player.stop();
     });
   }
 
@@ -931,11 +936,6 @@ class _DefaultAudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     await _savePosition();
   }
 
-  Future<void> complete() async {
-    log.fine('complete() triggered - saving position');
-    await _savePosition(complete: true);
-  }
-
   @override
   Future<void> fastForward() async {
     var forwardPosition = _player.position.inMilliseconds;
@@ -975,6 +975,7 @@ class _DefaultAudioPlayerHandler extends BaseAudioHandler with SeekHandler {
       case 'queueend':
         log.fine('Received custom action: queue end');
         await _player.stop();
+        await super.stop();
         break;
       case 'sleep':
         log.fine('Received custom action: sleep end of episode');
@@ -1011,11 +1012,6 @@ class _DefaultAudioPlayerHandler extends BaseAudioHandler with SeekHandler {
 
   PlaybackState _transformEvent(PlaybackEvent event) {
     log.fine('_transformEvent Sending state ${_player.processingState}');
-
-    if (_player.processingState == ProcessingState.completed && _player.playing) {
-      log.fine('Transform event has received a complete - calling complete();');
-      complete();
-    }
 
     return PlaybackState(
       controls: [

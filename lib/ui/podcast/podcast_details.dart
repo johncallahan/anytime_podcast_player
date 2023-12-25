@@ -164,10 +164,10 @@ class _PodcastDetailsState extends State<PodcastDetails> {
     return Semantics(
       header: false,
       label: L.of(context)!.semantics_podcast_details_header,
-      child: WillPopScope(
-        onWillPop: () {
+      child: PopScope(
+        canPop: true,
+        onPopInvoked: (didPop) {
           _resetSystemOverlayStyle();
-          return Future.value(true);
         },
         child: ScaffoldMessenger(
           key: scaffoldMessengerKey,
@@ -312,6 +312,7 @@ class _PodcastDetailsState extends State<PodcastDetails> {
   }
 }
 
+/// Renders the podcast or episode image.
 class PodcastHeaderImage extends StatelessWidget {
   const PodcastHeaderImage({
     Key? key,
@@ -345,6 +346,15 @@ class PodcastHeaderImage extends StatelessWidget {
   }
 }
 
+/// Renders the podcast title, copyright, description, follow/unfollow and
+/// overflow button.
+///
+/// If the episode description is fairly long, an overflow icon is also shown
+/// and a portion of the episode description is shown. Tapping the overflow
+/// icons allows the user to expand and collapse the text.
+///
+/// Description is rendered by [PodcastDescription].
+/// Follow/Unfollow button rendered by [FollowButton].
 class PodcastTitle extends StatefulWidget {
   final Podcast podcast;
 
@@ -377,19 +387,21 @@ class _PodcastTitleState extends State<PodcastTitle> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 2.0),
-                      child: Text(widget.podcast.title, style: textTheme.titleLarge),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-                      child: Text(widget.podcast.copyright ?? '', style: textTheme.bodySmall),
-                    ),
-                  ],
+                child: MergeSemantics(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 2.0),
+                        child: Text(widget.podcast.title, style: textTheme.titleLarge),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                        child: Text(widget.podcast.copyright ?? '', style: textTheme.bodySmall),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               StreamBuilder<bool>(
@@ -399,29 +411,33 @@ class _PodcastTitleState extends State<PodcastTitle> {
                     final expanded = snapshot.data!;
                     return Visibility(
                       visible: showOverflow,
-                      child: expanded
-                          ? TextButton(
-                              style: const ButtonStyle(
-                                visualDensity: VisualDensity.compact,
+                      child: SizedBox(
+                        height: 48.0,
+                        width: 48.0,
+                        child: expanded
+                            ? TextButton(
+                                style: const ButtonStyle(
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                child: Icon(
+                                  Icons.expand_less,
+                                  semanticLabel: L.of(context)!.semantics_collapse_podcast_description,
+                                ),
+                                onPressed: () {
+                                  isDescriptionExpandedStream.add(false);
+                                },
+                              )
+                            : TextButton(
+                                style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                                child: Icon(
+                                  Icons.expand_more,
+                                  semanticLabel: L.of(context)!.semantics_expand_podcast_description,
+                                ),
+                                onPressed: () {
+                                  isDescriptionExpandedStream.add(true);
+                                },
                               ),
-                              child: Icon(
-                                Icons.expand_less,
-                                semanticLabel: L.of(context)!.semantics_collapse_podcast_description,
-                              ),
-                              onPressed: () {
-                                isDescriptionExpandedStream.add(false);
-                              },
-                            )
-                          : TextButton(
-                              style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                              child: Icon(
-                                Icons.expand_more,
-                                semanticLabel: L.of(context)!.semantics_expand_podcast_description,
-                              ),
-                              onPressed: () {
-                                isDescriptionExpandedStream.add(true);
-                              },
-                            ),
+                      ),
                     );
                   })
             ],
@@ -436,7 +452,7 @@ class _PodcastTitleState extends State<PodcastTitle> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                SubscriptionButton(widget.podcast),
+                FollowButton(widget.podcast),
                 PodcastContextMenu(widget.podcast),
                 settings.showFunding
                     ? FundingMenu(widget.podcast.funding)
@@ -529,10 +545,10 @@ class PodcastDescription extends StatelessWidget {
   }
 }
 
-class SubscriptionButton extends StatelessWidget {
+class FollowButton extends StatelessWidget {
   final Podcast podcast;
 
-  const SubscriptionButton(this.podcast, {super.key});
+  const FollowButton(this.podcast, {super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -8,6 +8,7 @@ import 'package:anytime/ui/podcast/podcast_details.dart';
 import 'package:anytime/ui/widgets/tile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 class PodcastTile extends StatelessWidget {
   final Podcast podcast;
@@ -30,6 +31,11 @@ class PodcastTile extends StatelessWidget {
               builder: (context) => PodcastDetails(podcast, podcastBloc)),
         );
       },
+	  onLongPress: () {
+	  	//ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(podcast.url),));
+		ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Podcast URL copied to clipboard"),));
+		Clipboard.setData(ClipboardData(text: podcast.url));
+	  },
       minVerticalPadding: 9,
       leading: ExcludeSemantics(
         child: Hero(

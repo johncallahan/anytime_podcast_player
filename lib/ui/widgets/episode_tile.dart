@@ -926,15 +926,27 @@ class EpisodeSubtitle extends StatelessWidget {
         title = '$title / ${timeRemaining.inMinutes} min left';
       }
     }
+	
+	String episodeUrl = episode.contentUrl ?? '';
+	int lastSlash = episodeUrl.length == 0 ? -1 : episodeUrl.lastIndexOf('/');
+	String episodeSuffix = (lastSlash != -1)? episodeUrl.substring(lastSlash+1): '';
 
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
-      child: Text(
-        title,
-        overflow: TextOverflow.ellipsis,
-        softWrap: false,
-        style: textTheme.bodySmall,
-      ),
+      child: Column(
+	    children: <Widget>[
+			Text(
+        		title,
+        		overflow: TextOverflow.ellipsis,
+        		softWrap: false,
+        		style: textTheme.bodySmall,
+      		),
+			Text(
+				episodeSuffix,
+				style: textTheme.labelSmall,
+			),
+		]
+	  )
     );
   }
 }

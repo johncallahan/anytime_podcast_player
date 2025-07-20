@@ -88,9 +88,12 @@ class MobileDownloadService extends DownloadService {
         await createDownloadDirectory(episode);
 
         // Filename should be last segment of URI.
-        var filename = safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.mp3')));
+        //var filename = safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.mp3')));
 
-        filename ??= safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.m4a')));
+        //filename ??= safeFile(uri.pathSegments.lastWhereOrNull((e) => e.toLowerCase().endsWith('.m4a')));
+		
+		// Instead, just use the last segment as the filename regardless
+		var filename = uri.pathSegments.last;
 
         if (filename == null) {
           //TODO: Handle unsupported format.

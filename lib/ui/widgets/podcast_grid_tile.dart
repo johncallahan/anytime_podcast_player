@@ -8,6 +8,7 @@ import 'package:anytime/ui/podcast/podcast_details.dart';
 import 'package:anytime/ui/widgets/tile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 class PodcastGridTile extends StatelessWidget {
   final Podcast podcast;
@@ -30,6 +31,11 @@ class PodcastGridTile extends StatelessWidget {
               builder: (context) => PodcastDetails(podcast, podcastBloc)),
         );
       },
+	  onLongPress: () {
+	          //ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(podcast.url),));
+	          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Podcast URL copied to clipboard"),));
+	          Clipboard.setData(ClipboardData(text: podcast.url));
+	        },
       child: Semantics(
         label: podcast.title,
         child: GridTile(
@@ -69,6 +75,11 @@ class PodcastTitledGridTile extends StatelessWidget {
               builder: (context) => PodcastDetails(podcast, podcastBloc)),
         );
       },
+	  onLongPress: () {
+	          //ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(podcast.url),));
+	          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Podcast URL copied to clipboard"),));
+	          Clipboard.setData(ClipboardData(text: podcast.url));
+	        },
       child: GridTile(
         child: Hero(
           key: Key('tilehero${podcast.imageUrl}:${podcast.link}'),

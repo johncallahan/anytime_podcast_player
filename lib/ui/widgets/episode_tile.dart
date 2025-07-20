@@ -954,16 +954,27 @@ class EpisodeSubtitle extends StatelessWidget {
       title = '$title • $mb${L.of(context)!.label_megabytes_abbr}';
       semanticTitle = '$semanticTitle, $mb ${L.of(context)!.label_megabytes}';
     }
+	
+	String episodeUrl = episode.contentUrl ?? '';
+	int lastSlash = episodeUrl.length == 0 ? -1 : episodeUrl.lastIndexOf('/');
+	String episodeSuffix = (lastSlash != -1)? episodeUrl.substring(lastSlash+1): '';
 
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
-      child: Text(
-        title,
-        semanticsLabel: semanticTitle,
-        overflow: TextOverflow.ellipsis,
-        softWrap: false,
-        style: textTheme.bodySmall,
-      ),
+	  child: Column(
+	  	    children: <Widget>[
+	  			Text(
+	          		title,
+	          		overflow: TextOverflow.ellipsis,
+	          		softWrap: false,
+	          		style: textTheme.bodySmall,
+	        		),
+	  			Text(
+	  				episodeSuffix,
+	  				style: textTheme.labelSmall,
+	  			),
+	  		]
+	  	  )
     );
   }
 

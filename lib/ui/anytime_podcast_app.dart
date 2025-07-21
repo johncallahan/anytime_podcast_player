@@ -563,6 +563,7 @@ class _AnytimeHomePageState extends State<AnytimeHomePage> with WidgetsBindingOb
             ),
             children: <Widget>[
               const Text('\u00a9 2020 Ben Hills'),
+			  const Text('\u00a9 2025 zrails LLC'),
               GestureDetector(
                 onTap: () {
                   _launchEmail();

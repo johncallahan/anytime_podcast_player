@@ -22,6 +22,8 @@ import 'package:flutter_dialogs/flutter_dialogs.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter/services.dart';
+
 
 /// This class builds a tile for each episode in the podcast feed.
 class EpisodeTile extends StatelessWidget {
@@ -316,6 +318,42 @@ class _ExpandableEpisodeTileState extends State<ExpandableEpisodeTile> {
                       ),
                       Text(
                         widget.episode.played ? L.of(context)!.mark_unplayed_label : L.of(context)!.mark_played_label,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0.0)),
+                  ),
+                  onPressed: () {
+					String episodeUrl = widget.episode.contentUrl ?? '';
+					int lastSlash = episodeUrl.length == 0 ? -1 : episodeUrl.lastIndexOf('/');
+					String episodeSuffix = (lastSlash != -1)? episodeUrl.substring(lastSlash+1): '';
+                    //print("COPY URL suffix: "+episodeSuffix);
+	  	          	ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Episode suffix copied to clipboard"),));
+	  	          	Clipboard.setData(ClipboardData(text: episodeSuffix));
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(
+                        Icons.content_copy,
+                        size: 22,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 2.0),
+                      ),
+                      Text(
+                        "Suffix",
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontWeight: FontWeight.normal,
